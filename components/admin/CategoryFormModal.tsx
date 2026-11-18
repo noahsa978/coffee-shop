@@ -111,7 +111,7 @@ export function CategoryFormModal({
                 if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
               }}
               placeholder="e.g. Signature Cakes"
-              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm focus:outline-none focus:ring-2 focus:ring-caramel"
+              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm placeholder:text-mocha/40 focus:outline-none focus:ring-2 focus:ring-caramel"
             />
             {errors.name && (
               <p className="text-[11px] text-red-600 font-medium">
@@ -139,7 +139,7 @@ export function CategoryFormModal({
                   setErrors((prev) => ({ ...prev, displayOrder: "" }));
               }}
               placeholder="1"
-              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm focus:outline-none focus:ring-2 focus:ring-caramel"
+              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm placeholder:text-mocha/40 focus:outline-none focus:ring-2 focus:ring-caramel"
             />
             <p className="text-[10px] text-mocha/70">
               Determines horizontal tab position on the public customer menu (1 = first tab).

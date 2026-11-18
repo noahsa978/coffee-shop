@@ -26,7 +26,7 @@ export interface Product {
 // Neutral warm-toned base64 blur placeholder for next/image
 // Displays instantly while images load, preventing layout shift and empty white flashes
 export const WARM_PLACEHOLDER_BLUR =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNcv+5/PQAGngKk7w49aQAAAABJRU5ErkJggg==";
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP49fkFAAXAAtZBXivhAAAAAElFTkSuQmCC";
 
 export const mockCategories: Category[] = [
   { id: "coffee", name: "Coffee", displayOrder: 1 },

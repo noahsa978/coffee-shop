@@ -164,7 +164,7 @@ export function StockAdjustDialog({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`e.g. 5 ${item.unit}`}
-              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm focus:outline-none focus:ring-2 focus:ring-caramel"
+              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm placeholder:text-mocha/40 focus:outline-none focus:ring-2 focus:ring-caramel"
             />
           </div>
 
@@ -182,7 +182,7 @@ export function StockAdjustDialog({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Morning delivery, Quality discard, Inventory count"
-              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm focus:outline-none focus:ring-2 focus:ring-caramel"
+              className="w-full px-3.5 py-2 rounded-xl border border-caramel/25 bg-cream/30 text-espresso text-sm placeholder:text-mocha/40 focus:outline-none focus:ring-2 focus:ring-caramel"
             />
           </div>
 

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { Coffee, Utensils } from "lucide-react";
 import { type Product, WARM_PLACEHOLDER_BLUR, CAFE_CONFIG } from "@/data/menu";
 
 interface ItemCardProps {
@@ -9,6 +11,15 @@ interface ItemCardProps {
 
 export function ItemCard({ product }: ItemCardProps) {
   const isSoldOut = !product.isAvailable;
+  const [imgError, setImgError] = useState(false);
+
+  // Helper icon for placeholder based on category
+  const renderPlaceholderIcon = () => {
+    if (product.categoryId === "savory") {
+      return <Utensils className="w-8 h-8 text-caramel/70" />;
+    }
+    return <Coffee className="w-8 h-8 text-caramel/70" />;
+  };
 
   return (
     <article
@@ -21,21 +32,31 @@ export function ItemCard({ product }: ItemCardProps) {
         isSoldOut ? " (Sold out)" : ""
       }`}
     >
-      {/* Square Photo with Rounded Corners */}
-      <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl overflow-hidden bg-cream aspect-square">
-        <Image
-          src={product.imageUrl}
-          alt={product.name}
-          fill
-          placeholder="blur"
-          blurDataURL={WARM_PLACEHOLDER_BLUR}
-          sizes="(max-width: 640px) 80px, 96px"
-          className={`object-cover object-center ${
-            !isSoldOut
-              ? "transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-108"
-              : ""
-          }`}
-        />
+      {/* Square Photo or Fallback Placeholder */}
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl overflow-hidden bg-cream border border-caramel/10 aspect-square flex items-center justify-center">
+        {!imgError && product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            placeholder="blur"
+            blurDataURL={WARM_PLACEHOLDER_BLUR}
+            onError={() => setImgError(true)}
+            sizes="(max-width: 640px) 80px, 96px"
+            className={`object-cover object-center ${
+              !isSoldOut
+                ? "transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-108"
+                : ""
+            }`}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-cream text-caramel/80">
+            {renderPlaceholderIcon()}
+            <span className="text-[9px] font-sans text-mocha/70 mt-1 uppercase tracking-wider font-medium">
+              Cake Eats
+            </span>
+          </div>
+        )}
 
         {/* Optional Tag (New / Popular) */}
         {product.tag && !isSoldOut && (

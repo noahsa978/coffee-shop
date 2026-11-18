@@ -33,6 +33,35 @@ interface CartItem {
   quantity: number;
 }
 
+function OrderProductImage({
+  imageUrl,
+  name,
+}: {
+  imageUrl: string;
+  name: string;
+}) {
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-cream border border-caramel/15 aspect-square flex items-center justify-center">
+      {!error && imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          placeholder="blur"
+          blurDataURL={WARM_PLACEHOLDER_BLUR}
+          onError={() => setError(true)}
+          className="object-cover"
+          sizes="56px"
+        />
+      ) : (
+        <Coffee className="w-6 h-6 text-caramel/70" />
+      )}
+    </div>
+  );
+}
+
 export function OrderBuilder({
   onCancel,
   onSubmitOrder,
@@ -211,17 +240,10 @@ export function OrderBuilder({
                       : "hover:border-caramel/40"
                   }`}
                 >
-                  <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-cream border border-caramel/15 aspect-square">
-                    <Image
-                      src={prod.imageUrl}
-                      alt={prod.name}
-                      fill
-                      placeholder="blur"
-                      blurDataURL={WARM_PLACEHOLDER_BLUR}
-                      className="object-cover"
-                      sizes="56px"
-                    />
-                  </div>
+                  <OrderProductImage
+                    imageUrl={prod.imageUrl}
+                    name={prod.name}
+                  />
 
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-xs sm:text-sm text-espresso truncate">

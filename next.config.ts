@@ -6,14 +6,6 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
   images: {
     // SPOT TO CONFIGURE IMAGE HOSTING:
     // Add remote domains or protocols here as hosting decisions evolve (e.g. Google Drive, Cloudinary, S3, custom CDNs)

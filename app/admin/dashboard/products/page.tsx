@@ -20,6 +20,35 @@ import { WARM_PLACEHOLDER_BLUR } from "@/data/menu";
 import { ProductFormModal } from "@/components/admin/ProductFormModal";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
+function ProductImageCell({
+  imageUrl,
+  name,
+}: {
+  imageUrl: string;
+  name: string;
+}) {
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="relative w-12 h-12 shrink-0 rounded-xl overflow-hidden bg-cream border border-caramel/15 aspect-square flex items-center justify-center">
+      {!error && imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          placeholder="blur"
+          blurDataURL={WARM_PLACEHOLDER_BLUR}
+          onError={() => setError(true)}
+          className="object-cover"
+          sizes="48px"
+        />
+      ) : (
+        <Coffee className="w-5 h-5 text-caramel/70" />
+      )}
+    </div>
+  );
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>(initialAdminProducts);
   const categories = initialAdminCategories;
@@ -196,17 +225,10 @@ export default function AdminProductsPage() {
                       {/* Thumbnail & Name */}
                       <td className="py-3.5 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 shrink-0 rounded-xl overflow-hidden bg-cream border border-caramel/15 aspect-square">
-                            <Image
-                              src={product.imageUrl}
-                              alt={product.name}
-                              fill
-                              placeholder="blur"
-                              blurDataURL={WARM_PLACEHOLDER_BLUR}
-                              className="object-cover"
-                              sizes="48px"
-                            />
-                          </div>
+                          <ProductImageCell
+                            imageUrl={product.imageUrl}
+                            name={product.name}
+                          />
                           <div>
                             <span className="font-medium text-espresso block leading-snug">
                               {product.name}

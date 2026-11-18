@@ -5,8 +5,6 @@ import Image from "next/image";
 import {
   motion,
   AnimatePresence,
-  useMotionValue,
-  useTransform,
   useReducedMotion,
   type PanInfo,
 } from "framer-motion";
@@ -29,13 +27,6 @@ export function ScrollHero() {
   const totalSlides = specials.length;
   const currentSpecial = specials[currentIndex];
 
-  // Motion value for active drag tracking to give immediate real-time parallax feedback
-  const dragX = useMotionValue(0);
-
-  // Parallax during active drag: background moves slower (15%), text card moves faster (45%)
-  const bgDragX = useTransform(dragX, [-400, 400], ["-6%", "6%"]);
-  const textDragX = useTransform(dragX, [-400, 400], ["-25%", "25%"]);
-
   const paginate = useCallback(
     (newDirection: number) => {
       setDirection(newDirection);
@@ -50,7 +41,7 @@ export function ScrollHero() {
     setCurrentIndex(idx);
   };
 
-  // Auto-play slideshow every 6 seconds, pauses on hover
+  // Auto-play every 6 seconds, pauses on hover or touch
   useEffect(() => {
     if (isPaused || shouldReduceMotion || totalSlides <= 1) return;
 
@@ -61,13 +52,13 @@ export function ScrollHero() {
     return () => clearInterval(timer);
   }, [isPaused, shouldReduceMotion, totalSlides, paginate]);
 
-  // Touch & drag release handler
+  // Handle swipe left / right with clean threshold
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) => {
-    const swipeThreshold = 50;
-    const velocityThreshold = 300;
+    const swipeThreshold = 40;
+    const velocityThreshold = 200;
 
     if (
       info.offset.x < -swipeThreshold ||
@@ -86,23 +77,22 @@ export function ScrollHero() {
 
   return (
     <header
-      className="relative w-full h-[400px] sm:h-[480px] md:h-[540px] overflow-hidden select-none bg-espresso"
+      className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] overflow-hidden select-none bg-espresso touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-label="Handcrafted Specials Showcase - Swipe left or right to explore"
     >
-      {/* Interactive Draggable / Swipeable Surface */}
+      {/* Interactive Draggable / Swipeable Surface (touch-pan-y allows 100% smooth vertical scrolling) */}
       <motion.div
-        className="relative w-full h-full cursor-grab active:cursor-grabbing"
+        className="relative w-full h-full cursor-grab active:cursor-grabbing touch-pan-y"
         drag={shouldReduceMotion ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
+        dragElastic={0.25}
         onDragStart={() => setIsPaused(true)}
         onDragEnd={handleDragEnd}
-        style={{ x: dragX }}
       >
         {/* ==================================================== */}
-        {/* LAYER 1: FULL-BLEED BACKGROUND WITH SLOW PARALLAX    */}
+        {/* LAYER 1: BACKGROUND PHOTO (SLOWER PARALLAX: 15%)     */}
         {/* ==================================================== */}
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
@@ -112,36 +102,31 @@ export function ScrollHero() {
               shouldReduceMotion
                 ? { opacity: 0 }
                 : {
-                    x: direction > 0 ? "20%" : "-20%",
-                    scale: 1.12,
+                    x: direction > 0 ? "15%" : "-15%",
                     opacity: 0,
                   }
             }
             animate={{
               x: "0%",
-              scale: 1.05,
               opacity: 1,
               transition: {
-                x: { type: "spring", stiffness: 220, damping: 28 },
-                opacity: { duration: 0.5 },
-                scale: { duration: 0.7 },
+                x: { type: "spring", stiffness: 240, damping: 28 },
+                opacity: { duration: 0.45 },
               },
             }}
             exit={
               shouldReduceMotion
                 ? { opacity: 0 }
                 : {
-                    x: direction > 0 ? "-20%" : "20%",
-                    scale: 1.0,
+                    x: direction > 0 ? "-15%" : "15%",
                     opacity: 0,
                     transition: {
-                      x: { type: "spring", stiffness: 220, damping: 28 },
-                      opacity: { duration: 0.4 },
+                      x: { type: "spring", stiffness: 240, damping: 28 },
+                      opacity: { duration: 0.35 },
                     },
                   }
             }
-            style={{ x: shouldReduceMotion ? 0 : bgDragX }}
-            className="absolute inset-0 w-full h-full pointer-events-none"
+            className="absolute inset-0 w-full h-full pointer-events-none will-change-transform"
           >
             <Image
               src={
@@ -160,18 +145,18 @@ export function ScrollHero() {
                   [currentSpecial.id]: true,
                 }))
               }
-              className="object-cover object-center"
+              className="object-cover object-center scale-105"
               sizes="100vw"
             />
           </motion.div>
         </AnimatePresence>
 
         {/* Ambient Dark Café Gradient Overlays for High Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/70 to-espresso/40 pointer-events-none z-10" />
-        <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/50 pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/70 to-espresso/45 pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-black/25 pointer-events-none z-10" />
 
         {/* ==================================================== */}
-        {/* LAYER 2: FOREGROUND CONTENT (FASTER PARALLAX DEPTH)  */}
+        {/* LAYER 2: FOREGROUND CARD (FASTER PARALLAX: 60%)      */}
         {/* ==================================================== */}
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
@@ -190,7 +175,7 @@ export function ScrollHero() {
               opacity: 1,
               transition: {
                 x: { type: "spring", stiffness: 240, damping: 26 },
-                opacity: { duration: 0.45, delay: 0.05 },
+                opacity: { duration: 0.4, delay: 0.05 },
               },
             }}
             exit={
@@ -205,12 +190,11 @@ export function ScrollHero() {
                     },
                   }
             }
-            style={{ x: shouldReduceMotion ? 0 : textDragX }}
-            className="absolute inset-0 z-20 flex items-center justify-center px-4 sm:px-8 pointer-events-none"
+            className="absolute inset-0 z-20 flex items-center justify-center px-4 sm:px-8 pointer-events-none will-change-transform"
           >
-            {/* Elegant Glassmorphic Showcase Card for Perfect Balance & Proportions */}
-            <div className="relative max-w-xl sm:max-w-2xl w-full mx-auto p-6 sm:p-9 rounded-3xl bg-espresso/60 backdrop-blur-md border border-caramel/25 shadow-2xl flex flex-col items-center text-center">
-              {/* Badge & Counter */}
+            {/* Elegant Café Showcase Card (No expensive backdrop-blur, uses high-performance rgba to prevent scroll repaint jank) */}
+            <div className="relative max-w-xl sm:max-w-2xl w-full mx-auto p-6 sm:p-9 rounded-3xl bg-[#2D1B13]/88 border border-caramel/25 shadow-2xl flex flex-col items-center text-center">
+              {/* Badge & Slide Counter */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-[11px] font-sans font-mono tracking-widest text-cream/70 uppercase">
                   {String(currentIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
@@ -248,12 +232,12 @@ export function ScrollHero() {
       </motion.div>
 
       {/* ==================================================== */}
-      {/* DESKTOP PREV / NEXT PARALLAX SWIPE BUTTONS           */}
+      {/* DESKTOP PREV / NEXT BUTTONS                          */}
       {/* ==================================================== */}
       <button
         type="button"
         onClick={() => paginate(-1)}
-        className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
+        className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
         aria-label="Previous special"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -262,7 +246,7 @@ export function ScrollHero() {
       <button
         type="button"
         onClick={() => paginate(1)}
-        className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
+        className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
         aria-label="Next special"
       >
         <ChevronRight className="w-6 h-6" />
@@ -280,7 +264,7 @@ export function ScrollHero() {
 
         {/* Slide Indicator Dots */}
         <nav
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-espresso/70 backdrop-blur-md border border-caramel/25 shadow-lg pointer-events-auto"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-espresso/80 border border-caramel/25 shadow-lg pointer-events-auto"
           aria-label="Specials carousel slide selectors"
         >
           {specials.map((item, idx) => {

@@ -9,7 +9,6 @@ import {
   useTransform,
   useReducedMotion,
   type PanInfo,
-  type Variants,
 } from "framer-motion";
 import {
   ChevronLeft,
@@ -20,95 +19,38 @@ import {
 import { specials, PLACEHOLDER_IMAGE } from "@/data/specials";
 import { CAFE_CONFIG, WARM_PLACEHOLDER_BLUR } from "@/data/menu";
 
-// Parallax speed variants for the background (moves slower, 25% distance)
-const backgroundVariants: Variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? "25%" : "-25%",
-    scale: 1.1,
-    opacity: 0,
-  }),
-  center: {
-    x: "0%",
-    scale: 1.04,
-    opacity: 1,
-    transition: {
-      x: { type: "spring" as const, stiffness: 260, damping: 28 },
-      opacity: { duration: 0.5 },
-      scale: { duration: 0.8 },
-    },
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? "-25%" : "25%",
-    scale: 1.0,
-    opacity: 0,
-    transition: {
-      x: { type: "spring" as const, stiffness: 260, damping: 28 },
-      opacity: { duration: 0.4 },
-    },
-  }),
-};
-
-// Parallax speed variants for the text & foreground (moves faster, 75% distance)
-const textVariants: Variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? "75%" : "-75%",
-    opacity: 0,
-  }),
-  center: {
-    x: "0%",
-    opacity: 1,
-    transition: {
-      x: { type: "spring" as const, stiffness: 260, damping: 26 },
-      opacity: { duration: 0.4, delay: 0.05 },
-    },
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? "-75%" : "75%",
-    opacity: 0,
-    transition: {
-      x: { type: "spring" as const, stiffness: 260, damping: 26 },
-      opacity: { duration: 0.3 },
-    },
-  }),
-};
-
 export function ScrollHero() {
-  const [page, setPage] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [imgErrorMap, setImgErrorMap] = useState<Record<string, boolean>>({});
 
   const shouldReduceMotion = useReducedMotion() ?? false;
   const totalSlides = specials.length;
-
-  // Normalized current slide index
-  const currentIndex = ((page % totalSlides) + totalSlides) % totalSlides;
   const currentSpecial = specials[currentIndex];
 
   // Motion value for active drag tracking to give immediate real-time parallax feedback
   const dragX = useMotionValue(0);
 
-  // Background moves at 1/4 the rate of drag (subtle depth)
-  const bgDragOffset = useTransform(dragX, [-300, 300], ["-8%", "8%"]);
-  // Foreground text moves at 1/2 the rate of drag (feels close to camera)
-  const textDragOffset = useTransform(dragX, [-300, 300], ["-35%", "35%"]);
+  // Parallax during active drag: background moves slower (15%), text card moves faster (45%)
+  const bgDragX = useTransform(dragX, [-400, 400], ["-6%", "6%"]);
+  const textDragX = useTransform(dragX, [-400, 400], ["-25%", "25%"]);
 
   const paginate = useCallback(
     (newDirection: number) => {
       setDirection(newDirection);
-      setPage((prev) => prev + newDirection);
+      setCurrentIndex((prev) => (prev + newDirection + totalSlides) % totalSlides);
     },
-    []
+    [totalSlides]
   );
 
   const goToSlide = (idx: number) => {
-    const diff = idx - currentIndex;
-    if (diff === 0) return;
-    setDirection(diff > 0 ? 1 : -1);
-    setPage((prev) => prev + diff);
+    if (idx === currentIndex) return;
+    setDirection(idx > currentIndex ? 1 : -1);
+    setCurrentIndex(idx);
   };
 
-  // Auto-play every 6 seconds, pauses on hover or user interaction
+  // Auto-play slideshow every 6 seconds, pauses on hover
   useEffect(() => {
     if (isPaused || shouldReduceMotion || totalSlides <= 1) return;
 
@@ -119,37 +61,37 @@ export function ScrollHero() {
     return () => clearInterval(timer);
   }, [isPaused, shouldReduceMotion, totalSlides, paginate]);
 
-  // Handle drag / swipe release
+  // Touch & drag release handler
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) => {
     const swipeThreshold = 50;
-    const velocityThreshold = 250;
+    const velocityThreshold = 300;
 
     if (
       info.offset.x < -swipeThreshold ||
       info.velocity.x < -velocityThreshold
     ) {
-      // Swiped left -> show next special
+      // Swiped left -> next special
       paginate(1);
     } else if (
       info.offset.x > swipeThreshold ||
       info.velocity.x > velocityThreshold
     ) {
-      // Swiped right -> show prev special
+      // Swiped right -> prev special
       paginate(-1);
     }
   };
 
   return (
     <header
-      className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] overflow-hidden select-none bg-espresso"
+      className="relative w-full h-[400px] sm:h-[480px] md:h-[540px] overflow-hidden select-none bg-espresso"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-label="Handcrafted Specials Showcase - Swipe left or right to explore"
     >
-      {/* Interactive Draggable / Swipeable Area */}
+      {/* Interactive Draggable / Swipeable Surface */}
       <motion.div
         className="relative w-full h-full cursor-grab active:cursor-grabbing"
         drag={shouldReduceMotion ? false : "x"}
@@ -159,19 +101,47 @@ export function ScrollHero() {
         onDragEnd={handleDragEnd}
         style={{ x: dragX }}
       >
+        {/* ==================================================== */}
+        {/* LAYER 1: FULL-BLEED BACKGROUND WITH SLOW PARALLAX    */}
+        {/* ==================================================== */}
         <AnimatePresence initial={false} custom={direction}>
-          {/* ==================================================== */}
-          {/* LAYER 1: PARALLAX BACKGROUND (MOVES SLOWER)          */}
-          {/* ==================================================== */}
           <motion.div
             key={`bg-${currentIndex}`}
             custom={direction}
-            variants={shouldReduceMotion ? undefined : backgroundVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            style={{ x: shouldReduceMotion ? 0 : bgDragOffset }}
-            className="absolute inset-y-0 -left-[12%] -right-[12%] w-[124%] h-full pointer-events-none"
+            initial={
+              shouldReduceMotion
+                ? { opacity: 0 }
+                : {
+                    x: direction > 0 ? "20%" : "-20%",
+                    scale: 1.12,
+                    opacity: 0,
+                  }
+            }
+            animate={{
+              x: "0%",
+              scale: 1.05,
+              opacity: 1,
+              transition: {
+                x: { type: "spring", stiffness: 220, damping: 28 },
+                opacity: { duration: 0.5 },
+                scale: { duration: 0.7 },
+              },
+            }}
+            exit={
+              shouldReduceMotion
+                ? { opacity: 0 }
+                : {
+                    x: direction > 0 ? "-20%" : "20%",
+                    scale: 1.0,
+                    opacity: 0,
+                    transition: {
+                      x: { type: "spring", stiffness: 220, damping: 28 },
+                      opacity: { duration: 0.4 },
+                    },
+                  }
+            }
+            style={{ x: shouldReduceMotion ? 0 : bgDragX }}
+            className="absolute inset-0 w-full h-full pointer-events-none"
           >
             <Image
               src={
@@ -190,48 +160,79 @@ export function ScrollHero() {
                   [currentSpecial.id]: true,
                 }))
               }
-              className="object-cover object-center scale-105"
+              className="object-cover object-center"
               sizes="100vw"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* Ambient Warm Gradient Overlays for High Contrast Readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-espresso/95 via-espresso/70 to-espresso/50 pointer-events-none z-10" />
-        <div className="absolute inset-0 bg-black/25 pointer-events-none z-10" />
+        {/* Ambient Dark Café Gradient Overlays for High Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/70 to-espresso/40 pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/50 pointer-events-none z-10" />
 
         {/* ==================================================== */}
-        {/* LAYER 2: PARALLAX FOREGROUND CONTENT (MOVES FASTER)  */}
+        {/* LAYER 2: FOREGROUND CONTENT (FASTER PARALLAX DEPTH)  */}
         {/* ==================================================== */}
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
-            key={`text-${currentIndex}`}
+            key={`content-${currentIndex}`}
             custom={direction}
-            variants={shouldReduceMotion ? undefined : textVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            style={{ x: shouldReduceMotion ? 0 : textDragOffset }}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6 sm:px-14 pointer-events-none"
+            initial={
+              shouldReduceMotion
+                ? { opacity: 0 }
+                : {
+                    x: direction > 0 ? "60%" : "-60%",
+                    opacity: 0,
+                  }
+            }
+            animate={{
+              x: "0%",
+              opacity: 1,
+              transition: {
+                x: { type: "spring", stiffness: 240, damping: 26 },
+                opacity: { duration: 0.45, delay: 0.05 },
+              },
+            }}
+            exit={
+              shouldReduceMotion
+                ? { opacity: 0 }
+                : {
+                    x: direction > 0 ? "-60%" : "60%",
+                    opacity: 0,
+                    transition: {
+                      x: { type: "spring", stiffness: 240, damping: 26 },
+                      opacity: { duration: 0.3 },
+                    },
+                  }
+            }
+            style={{ x: shouldReduceMotion ? 0 : textDragX }}
+            className="absolute inset-0 z-20 flex items-center justify-center px-4 sm:px-8 pointer-events-none"
           >
-            <div className="max-w-2xl mx-auto flex flex-col items-center">
-              {/* Category / Special Tag Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-semibold tracking-wide uppercase bg-caramel text-warm-white shadow-md mb-3">
-                <Sparkles className="w-3.5 h-3.5" />
-                {currentSpecial.tag}
+            {/* Elegant Glassmorphic Showcase Card for Perfect Balance & Proportions */}
+            <div className="relative max-w-xl sm:max-w-2xl w-full mx-auto p-6 sm:p-9 rounded-3xl bg-espresso/60 backdrop-blur-md border border-caramel/25 shadow-2xl flex flex-col items-center text-center">
+              {/* Badge & Counter */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[11px] font-sans font-mono tracking-widest text-cream/70 uppercase">
+                  {String(currentIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-caramel" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-sans font-semibold tracking-wide uppercase bg-caramel text-warm-white shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {currentSpecial.tag}
+                </span>
               </div>
 
-              {/* Special Title */}
-              <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl text-cream font-normal tracking-wide drop-shadow-md leading-tight">
+              {/* Title */}
+              <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl text-cream font-normal tracking-wide leading-tight drop-shadow-sm">
                 {currentSpecial.name}
               </h2>
 
-              {/* Mouth-watering Description */}
-              <p className="mt-2.5 sm:mt-3.5 text-xs sm:text-base text-cream/90 font-sans max-w-lg leading-relaxed drop-shadow-xs line-clamp-2 sm:line-clamp-3">
+              {/* Description */}
+              <p className="mt-2.5 sm:mt-3.5 text-xs sm:text-sm md:text-base text-cream/90 font-sans leading-relaxed max-w-lg">
                 {currentSpecial.description}
               </p>
 
-              {/* Price & Feature Callout */}
+              {/* Price & Highlight */}
               <div className="mt-4 sm:mt-5 flex items-baseline gap-2.5">
                 <span className="text-[11px] sm:text-xs uppercase tracking-wider text-caramel font-semibold">
                   Today&apos;s Feature
@@ -252,7 +253,7 @@ export function ScrollHero() {
       <button
         type="button"
         onClick={() => paginate(-1)}
-        className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/60 hover:bg-espresso/90 text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+        className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
         aria-label="Previous special"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -261,25 +262,25 @@ export function ScrollHero() {
       <button
         type="button"
         onClick={() => paginate(1)}
-        className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/60 hover:bg-espresso/90 text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+        className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-espresso/70 hover:bg-espresso text-cream/80 hover:text-warm-white border border-caramel/30 backdrop-blur-xs items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xl"
         aria-label="Next special"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
 
       {/* ==================================================== */}
-      {/* MOBILE SWIPE HINT & BOTTOM PROGRESS INDICATOR        */}
+      {/* BOTTOM PROGRESS NAVIGATION & MOBILE SWIPE HINT       */}
       {/* ==================================================== */}
       <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-30 flex flex-col items-center gap-2 pointer-events-none">
-        {/* Subtle Swipe Left Cue for Touch Screens */}
-        <div className="sm:hidden flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-cream/60 font-medium">
+        {/* Subtle Mobile Swipe Cue */}
+        <div className="sm:hidden flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-cream/70 font-medium">
           <span>Swipe left for next</span>
           <ArrowRight className="w-3 h-3 text-caramel animate-pulse" />
         </div>
 
-        {/* Slide Dots / Pill Indicators */}
+        {/* Slide Indicator Dots */}
         <nav
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-espresso/60 backdrop-blur-xs border border-caramel/25 shadow-md pointer-events-auto"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-espresso/70 backdrop-blur-md border border-caramel/25 shadow-lg pointer-events-auto"
           aria-label="Specials carousel slide selectors"
         >
           {specials.map((item, idx) => {
@@ -297,7 +298,7 @@ export function ScrollHero() {
                   className={`block rounded-full transition-all duration-300 ${
                     isActive
                       ? "w-6 h-2 bg-caramel ring-2 ring-caramel/40"
-                      : "w-2 h-2 bg-cream/35 group-hover:bg-cream/70"
+                      : "w-2 h-2 bg-cream/40 group-hover:bg-cream/75"
                   }`}
                 />
               </button>

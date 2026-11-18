@@ -3,9 +3,8 @@ import {
   CAFE_CONFIG,
   mockCategories,
   mockProducts,
-  featuredProducts,
 } from "@/data/menu";
-import { Hero } from "@/components/Hero";
+import { ScrollHero } from "@/components/ScrollHero";
 import { CategoryBar } from "@/components/CategoryBar";
 import { MenuSection } from "@/components/MenuSection";
 import { BackToTop } from "@/components/BackToTop";
@@ -22,8 +21,8 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-cream text-espresso flex flex-col selection:bg-caramel selection:text-warm-white">
-      {/* 1. Hero Banner with auto-playing featured specials slideshow */}
-      <Hero featuredItems={featuredProducts} />
+      {/* 1. Hero Banner with interactive parallax scroll showcase */}
+      <ScrollHero />
 
       {/* 2. Sticky Category Bar */}
       <CategoryBar categories={sortedCategories} />
